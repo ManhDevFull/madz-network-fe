@@ -14,6 +14,7 @@ type BtnAddFRDProps = {
     targetId: string;
     initialStatus: FriendshipStatus;
     initialRequestedByMe?: boolean;
+    initialIsFollowing?: boolean | null;
 };
 
 type FriendResponse = {
@@ -23,14 +24,21 @@ type FriendResponse = {
     status: number;
 };
 
+type FollowResponse = {
+    follower_id: string;
+    following_id: string;
+    is_following: boolean;
+};
+
 export default function BtnAddFRD({
     targetId,
     initialStatus,
     initialRequestedByMe = false,
+    initialIsFollowing = false,
 }: BtnAddFRDProps) {
     const router = useRouter();
     const accessToken = useAuthStore((state) => state.accessToken);
-    const [isFollowing, setIsFollowing] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(Boolean(initialIsFollowing));
     const [friendshipStatus, setFriendshipStatus] = useState<FriendshipStatus>(initialStatus);
     const [requestedByMe, setRequestedByMe] = useState(initialRequestedByMe);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,12 +91,30 @@ export default function BtnAddFRD({
         }
     };
 
+    const handleFollow = async () => {
+        if (!accessToken) {
+            toast.notify("Bạn cần đăng nhập để theo dõi.");
+            router.push("/login");
+            return;
+        }
+
+        try {
+            const response = await handleAPI<FollowResponse>(`/follow/${targetId}`, "POST");
+            setIsFollowing(response.is_following);
+            toast.success(response.is_following ? "Đã theo dõi người dùng." : "Đã bỏ theo dõi.");
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : "Không thể cập nhật theo dõi.";
+            toast.error(message);
+        }
+    };
+
     const friendButton = resolveFriendButton(friendshipStatus, requestedByMe, isSubmitting);
 
     return (
         <SectionCard className="mt-5 flex gap-3">
             <button
-                onClick={() => setIsFollowing(!isFollowing)}
+                onClick={() => void handleFollow()}
                 className="border text-center rounded-lg py-1 bg-white/20 border-white/20 flex-1 flex items-center justify-center gap-2">
                 {isFollowing ? (
                     <RiUserStarFill size={17} />

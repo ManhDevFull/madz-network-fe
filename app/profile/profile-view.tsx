@@ -32,6 +32,7 @@ export type ProfileUser = {
     friendship_id?: string | null;
     friendship_status?: "self" | "none" | "pending" | "accepted" | "rejected" | "blocked" | "unknown" | null;
     friendship_requested_by_me?: boolean;
+    is_following?: boolean | null;
 };
 
 type ProfileViewProps = {
@@ -385,6 +386,7 @@ export default function ProfileView({ userSlug }: ProfileViewProps) {
                     </SectionCard>
                     {!isOwnProfile ? (
                         <BtnAddFRD
+                            initialIsFollowing={userProfile?.is_following ?? false}
                             initialRequestedByMe={userProfile?.friendship_requested_by_me ?? false}
                             initialStatus={userProfile?.friendship_status ?? null}
                             targetId={userProfile?.id ?? ""}

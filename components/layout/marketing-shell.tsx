@@ -19,6 +19,8 @@ import { cn } from "@/utils/cn";
 type MarketingShellProps = {
   children: ReactNode;
   currentPage: "home" | "login" | "register" | "chat" | "profile";
+  contentClassName?: string;
+  bodyClassName?: string;
 };
 
 const navItems = [
@@ -43,6 +45,8 @@ type SearchUser = {
 export function MarketingShell({
   children,
   currentPage,
+  contentClassName,
+  bodyClassName,
 }: MarketingShellProps) {
   const router = useRouter();
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -369,11 +373,16 @@ export function MarketingShell({
 
         <main
           className={cn(
-            "mt-18 grid flex-1 gap-4 py-4"
+            "mt-18 grid flex-1 gap-4 overflow-hidden py-2"
           )}
         >
-          <section className="surface-panel flex flex-col justify-between gap-8 px-3 py-6 sm:px-4 sm:py-6">
-            <div className="grid gap-4">{children}</div>
+          <section className={cn(
+            "surface-panel flex h-[calc(100vh-7.5rem)] min-h-0 flex-col justify-between gap-8 overflow-hidden px-3 py-6 sm:px-4 sm:py-6",
+            bodyClassName,
+          )}>
+            <div className={cn("grid min-h-0 flex-1 gap-4 overflow-hidden", contentClassName)}>
+              {children}
+            </div>
           </section>
         </main>
       </div>
