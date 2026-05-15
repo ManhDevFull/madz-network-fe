@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { BsLayoutSidebarInset, BsLayoutSidebarInsetReverse } from "react-icons/bs";
 import {
+    RiAlarmWarningLine,
+    RiCheckLine,
+    RiFileList3Line,
+    RiFolderSharedLine,
     RiEdit2Line,
+    RiNotificationOffLine,
+    RiPriceTag3Line,
     RiMore2Fill,
     RiPushpin2Line,
     RiSearchLine,
     RiSettings4Line,
+    RiTeamLine,
+    RiDeleteBinLine,
     RiUser3Line,
 } from "react-icons/ri";
 
@@ -75,11 +83,65 @@ const initialMessages = [
     },
 ] as const;
 
+const recentImages = [
+    { id: "img-1", label: "Ảnh 01" },
+    { id: "img-2", label: "Ảnh 02" },
+    { id: "img-3", label: "Ảnh 03" },
+] as const;
+
+const recentFiles = [
+    { id: "file-1", name: "brief-product.pdf" },
+    { id: "file-2", name: "meeting-notes.docx" },
+    { id: "file-3", name: "release-checklist.xlsx" },
+] as const;
+
 export default function ChatPage() {
     const [isNavCollapsed, setIsNavCollapsed] = useState(false);
     const [messages, setMessages] = useState([...initialMessages]);
     const [draftMessage, setDraftMessage] = useState("");
     const [isSendingMessage, setIsSendingMessage] = useState(false);
+    const [isInfoOpen, setIsInfoOpen] = useState(true);
+    const [nickname, setNickname] = useState("Mạnh Đẹp choai");
+    const [nicknameDraft, setNicknameDraft] = useState("Mạnh Đẹp choai");
+    const [isEditingNickname, setIsEditingNickname] = useState(false);
+    const [isSearchingInChat, setIsSearchingInChat] = useState(false);
+    const [chatSearchValue, setChatSearchValue] = useState("");
+    const nicknameRowRef = useRef<HTMLDivElement | null>(null);
+    const searchRowRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!isEditingNickname && !isSearchingInChat) {
+            return undefined;
+        }
+
+        function handleClickOutside(event: MouseEvent) {
+            const target = event.target as Node;
+
+            if (
+                isEditingNickname &&
+                nicknameRowRef.current &&
+                !nicknameRowRef.current.contains(target) &&
+                nicknameDraft.trim() === nickname
+            ) {
+                setNicknameDraft(nickname);
+                setIsEditingNickname(false);
+            }
+
+            if (
+                isSearchingInChat &&
+                searchRowRef.current &&
+                !searchRowRef.current.contains(target)
+            ) {
+                setIsSearchingInChat(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isEditingNickname, isSearchingInChat, nickname, nicknameDraft]);
 
     function handleToggleNav() {
         setIsNavCollapsed((currentValue) => !currentValue);
@@ -101,9 +163,23 @@ export default function ChatPage() {
             //         }),
             //     },
             // ]);
-            // setDraftMessage("");
+            setDraftMessage("");
         } finally {
             setIsSendingMessage(false);
+        }
+    }
+
+    function handleSaveNickname() {
+        const nextNickname = nicknameDraft.trim() || "Biệt danh";
+        setNickname(nextNickname);
+        setNicknameDraft(nextNickname);
+        setIsEditingNickname(false);
+    }
+
+    function handleNicknameKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            handleSaveNickname();
         }
     }
 
@@ -183,32 +259,32 @@ export default function ChatPage() {
                                             .join("")}
                                     </div>
 
-                                {
-                                    !isNavCollapsed && (
+                                    {
+                                        !isNavCollapsed && (
                                             <div
-                                        className={navBodyClassName}
-                                    >
-                                        <div className="flex items-center justify-between gap-3">
-                                            <p className="truncate text-sm font-semibold text-white">
-                                                {conversation.name}
-                                            </p>
-                                            <span className="shrink-0 text-xs text-white/35">
-                                                {conversation.time}
-                                            </span>
-                                        </div>
-                                        <div className="mt-1 flex items-center justify-between gap-3">
-                                            <p className="truncate text-sm text-white/45">
-                                                {conversation.message}
-                                            </p>
-                                            {conversation.unread > 0 ? (
-                                                <span className="flex min-w-3 items-center justify-center rounded-full bg-green-400/90 px-1 py-0 text-[10px] font-semibold text-white">
-                                                    {conversation.unread}
-                                                </span>
-                                            ) : null}
-                                        </div>
-                                    </div>
-                                    )
-                                }
+                                                className={navBodyClassName}
+                                            >
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <p className="truncate text-sm font-semibold text-white">
+                                                        {conversation.name}
+                                                    </p>
+                                                    <span className="shrink-0 text-xs text-white/35">
+                                                        {conversation.time}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1 flex items-center justify-between gap-3">
+                                                    <p className="truncate text-sm text-white/45">
+                                                        {conversation.message}
+                                                    </p>
+                                                    {conversation.unread > 0 ? (
+                                                        <span className="flex min-w-3 items-center justify-center rounded-full bg-green-400/90 px-1 py-0 text-[10px] font-semibold text-white">
+                                                            {conversation.unread}
+                                                        </span>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+                                        )
+                                    }
                                 </button>
                             ))}
                         </div>
@@ -276,8 +352,9 @@ export default function ChatPage() {
                             <button className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white">
                                 <RiUser3Line size={18} />
                             </button>
-                            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white">
-                                <RiMore2Fill size={18} />
+                            <button
+                                onClick={() => setIsInfoOpen(!isInfoOpen)} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white">
+                                <RiMore2Fill size={24} />
                             </button>
                         </div>
                     </div>
@@ -325,7 +402,332 @@ export default function ChatPage() {
                         />
                     </div>
                 </SectionCard>
+                <SectionCard
+                    className={cn(
+                        "flex h-full shrink-0 overflow-hidden !p-0 transition-[width,opacity,padding,border] duration-300 ease-out",
+                        isInfoOpen
+                            ? "w-[24%] min-w-[300px] opacity-100"
+                            : "w-0 min-w-0 border-transparent !p-0 opacity-0",
+                    )}
+                >
+                    <div
+                        className={cn(
+                            "flex h-full w-full flex-col overflow-hidden transition-opacity duration-200",
+                            isInfoOpen ? "opacity-100 delay-100" : "pointer-events-none opacity-0",
+                        )}
+                    >
+                        <div className="border-b border-white/8 px-4 py-3">
+                            <h3 className="text-base text-center font-semibold text-white">Thông tin đoạn chat</h3>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto py-2">
+                            <div className="flex flex-col">
+                                <EditableInfoRow
+                                    containerRef={nicknameRowRef}
+                                    icon={<RiPriceTag3Line size={18} />}
+                                    title="Biệt danh"
+                                    value={nickname}
+                                    isEditing={isEditingNickname}
+                                    draftValue={nicknameDraft}
+                                    onDraftChange={setNicknameDraft}
+                                    onStartEdit={() => {
+                                        setNicknameDraft(nickname);
+                                        setIsEditingNickname(true);
+                                    }}
+                                    onSave={handleSaveNickname}
+                                    onKeyDown={handleNicknameKeyDown}
+                                />
+
+                                <SearchInfoRow
+                                    containerRef={searchRowRef}
+                                    icon={<RiSearchLine size={18} />}
+                                    title="Tìm kiếm trong cuộc trò chuyện"
+                                    isSearching={isSearchingInChat}
+                                    value={chatSearchValue}
+                                    onOpen={() => setIsSearchingInChat(true)}
+                                    onChange={setChatSearchValue}
+                                />
+
+                                <div className="h-[1px] w-full bg-white/5 my-2" />
+
+                                <MediaBlock
+                                    title="File và file phương tiện"
+                                    actionLabel="Xem tất cả"
+                                    items={recentImages.map((image) => (
+                                        <div
+                                            key={image.id}
+                                            className="aspect-square rounded-lg border border-white/8 bg-white/[0.05] cursor-pointer hover:border-white/20 transition"
+                                        />
+                                    ))}
+                                />
+
+                                <div className="px-4 pb-2 grid gap-1 mt-1">
+                                    {recentFiles.map((file) => (
+                                        <div
+                                            key={file.id}
+                                            className="flex items-center gap-3 rounded-lg hover:bg-white/[0.04] p-2 transition cursor-pointer"
+                                        >
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.05] text-white/65">
+                                                <RiFileList3Line size={18} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-medium text-white/80">
+                                                    {file.name}
+                                                </p>
+                                                <p className="mt-0.5 text-xs text-white/40">Tệp gần đây</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="h-[1px] w-full bg-white/5 my-2" />
+
+                                <ActionBlock
+                                    title="Tùy chọn khác"
+                                    items={[
+                                        {
+                                            icon: <RiNotificationOffLine size={18} />,
+                                            label: "Tắt thông báo",
+                                            tone: "default",
+                                        },
+                                        {
+                                            icon: <RiTeamLine size={18} />,
+                                            label: "Tạo nhóm chat với...",
+                                            tone: "default",
+                                        },
+                                        {
+                                            icon: <RiFolderSharedLine size={18} />,
+                                            label: "Quản lý media và file",
+                                            tone: "default",
+                                        },
+                                    ]}
+                                />
+
+                                <div className="h-[1px] w-full bg-white/5 my-2" />
+
+                                <ActionBlock
+                                    title="Quyền riêng tư & hỗ trợ"
+                                    items={[
+                                        {
+                                            icon: <RiAlarmWarningLine size={18} />,
+                                            label: "Báo cáo cuộc trò chuyện",
+                                            tone: "danger",
+                                        },
+                                        {
+                                            icon: <RiDeleteBinLine size={18} />,
+                                            label: "Xóa đoạn hội thoại",
+                                            tone: "danger",
+                                        },
+                                    ]}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </SectionCard>
             </div>
         </MarketingShell>
+    );
+}
+
+function EditableInfoRow({
+    containerRef,
+    icon,
+    title,
+    value,
+    isEditing,
+    draftValue,
+    onDraftChange,
+    onStartEdit,
+    onSave,
+    onKeyDown,
+}: {
+    containerRef: React.RefObject<HTMLDivElement | null>;
+    icon: ReactNode;
+    title: string;
+    value: string;
+    isEditing: boolean;
+    draftValue: string;
+    onDraftChange: (value: string) => void;
+    onStartEdit: () => void;
+    onSave: () => void;
+    onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
+}) {
+    return (
+        <div
+            ref={containerRef}
+            onClick={!isEditing ? onStartEdit : undefined}
+            className={cn(
+                "group flex w-full items-center gap-3 px-4 py-2.5 transition hover:bg-white/[0.04]",
+                !isEditing ? "cursor-pointer" : "",
+            )}
+        >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-white/65 transition group-hover:bg-white/[0.1]">
+                {icon}
+            </div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="text-xs text-white/40">{title}</p>
+                <div className="relative mt-0.5 flex h-6 items-center">
+                    <div
+                        className={cn(
+                            "absolute inset-0 flex items-center transition-all duration-300",
+                            isEditing
+                                ? "pointer-events-none translate-x-2 opacity-0"
+                                : "translate-x-0 opacity-100",
+                        )}
+                    >
+                        <p className="truncate text-sm font-medium text-white/90">{value}</p>
+                    </div>
+
+                    <div
+                        className={cn(
+                            "absolute inset-0 flex items-center gap-2 transition-all duration-300",
+                            isEditing
+                                ? "translate-x-0 opacity-100"
+                                : "pointer-events-none -translate-x-2 opacity-0",
+                        )}
+                    >
+                        <input
+                            autoFocus
+                            value={draftValue}
+                            onChange={(event) => onDraftChange(event.target.value)}
+                            onKeyDown={onKeyDown}
+                            className="h-full w-full border-b border-white/20 bg-transparent text-sm text-white outline-none focus:border-white/50"
+                        />
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onSave();
+                            }}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.1] text-white/80 transition hover:bg-white/[0.2] hover:text-white"
+                        >
+                            <RiCheckLine size={14} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SearchInfoRow({
+    containerRef,
+    icon,
+    title,
+    isSearching,
+    value,
+    onOpen,
+    onChange,
+}: {
+    containerRef: React.RefObject<HTMLDivElement | null>;
+    icon: ReactNode;
+    title: string;
+    isSearching: boolean;
+    value: string;
+    onOpen: () => void;
+    onChange: (value: string) => void;
+}) {
+    return (
+        <div
+            ref={containerRef}
+            onClick={!isSearching ? onOpen : undefined}
+            className={cn(
+                "group flex w-full items-center gap-3 px-4 py-2.5 transition hover:bg-white/[0.04]",
+                !isSearching ? "cursor-pointer" : "",
+            )}
+        >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.05] text-white/65 transition group-hover:bg-white/[0.1]">
+                {icon}
+            </div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="relative flex h-8 items-center">
+                    <div
+                        className={cn(
+                            "absolute inset-0 flex items-center transition-all duration-300",
+                            isSearching
+                                ? "pointer-events-none translate-x-2 opacity-0"
+                                : "translate-x-0 opacity-100",
+                        )}
+                    >
+                        <p className="truncate text-sm text-white/80">{title}</p>
+                    </div>
+
+                    <div
+                        className={cn(
+                            "absolute inset-0 flex items-center transition-all duration-300",
+                            isSearching
+                                ? "translate-x-0 opacity-100"
+                                : "pointer-events-none -translate-x-2 opacity-0",
+                        )}
+                    >
+                        <input
+                            autoFocus
+                            value={value}
+                            onChange={(event) => onChange(event.target.value)}
+                            placeholder="Nhập nội dung..."
+                            className="h-full w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MediaBlock({
+    title,
+    actionLabel,
+    items,
+}: {
+    title: string;
+    actionLabel: string;
+    items: ReactNode[];
+}) {
+    return (
+        <div className="flex flex-col py-1">
+            <div className="flex cursor-pointer items-center justify-between px-4 py-2 transition hover:bg-white/[0.04]">
+                <h4 className="text-sm font-medium text-white">{title}</h4>
+                <button className="text-xs text-white/50 transition hover:text-white">
+                    {actionLabel}
+                </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2 px-4 pb-2 pt-1">
+                {items}
+            </div>
+        </div>
+    );
+}
+
+function ActionBlock({
+    title,
+    items,
+}: {
+    title: string;
+    items: Array<{
+        icon: ReactNode;
+        label: string;
+        tone: "default" | "danger";
+    }>;
+}) {
+    return (
+        <div className="flex flex-col py-1">
+            <h4 className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white/30">{title}</h4>
+            <div className="flex flex-col">
+                {items.map((item) => (
+                    <button
+                        key={item.label}
+                        className={cn(
+                            "group flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-white/[0.04]",
+                            item.tone === "danger" ? "text-red-400" : "text-white/80",
+                        )}
+                    >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.05] transition group-hover:bg-white/[0.1]">
+                            {item.icon}
+                        </span>
+                        <span className="text-sm">{item.label}</span>
+                    </button>
+                ))}
+            </div>
+        </div>
     );
 }
