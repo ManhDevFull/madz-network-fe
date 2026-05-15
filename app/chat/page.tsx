@@ -17,6 +17,12 @@ import {
     RiTeamLine,
     RiDeleteBinLine,
     RiUser3Line,
+    RiCloseLine,
+    RiDownload2Line,
+    RiShareForwardLine,
+    RiArrowGoForwardLine,
+    RiZoomInLine,
+    RiZoomOutLine,
 } from "react-icons/ri";
 
 import { MarketingShell } from "@/components/layout/marketing-shell";
@@ -84,10 +90,10 @@ const initialMessages = [
 ] as const;
 
 const recentImages = [
-    { id: "img-1", label: "Ảnh 01" },
-    { id: "img-2", label: "Ảnh 02" },
-    { id: "img-3", label: "Ảnh 03" },
-] as const;
+    { id: "img-1", url: "https://picsum.photos/seed/chat1/800/800", label: "Ảnh 01" },
+    { id: "img-2", url: "https://picsum.photos/seed/chat2/800/800", label: "Ảnh 02" },
+    { id: "img-3", url: "https://picsum.photos/seed/chat3/800/800", label: "Ảnh 03" },
+];
 
 const recentFiles = [
     { id: "file-1", name: "brief-product.pdf" },
@@ -96,18 +102,137 @@ const recentFiles = [
 ] as const;
 
 export default function ChatPage() {
+    const activeContactName = "Mạnh Frontend";
     const [isNavCollapsed, setIsNavCollapsed] = useState(false);
     const [messages, setMessages] = useState([...initialMessages]);
     const [draftMessage, setDraftMessage] = useState("");
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(true);
-    const [nickname, setNickname] = useState("Mạnh Đẹp choai");
-    const [nicknameDraft, setNicknameDraft] = useState("Mạnh Đẹp choai");
+    const [nickname, setNickname] = useState("");
+    const [nicknameDraft, setNicknameDraft] = useState("");
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [isSearchingInChat, setIsSearchingInChat] = useState(false);
     const [chatSearchValue, setChatSearchValue] = useState("");
+    const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+    const [imageZoom, setImageZoom] = useState(1);
+
+    const [isDraggingState, setIsDraggingState] = useState(false);
+    const pan = useRef({ x: 0, y: 0 });
+    const isDragging = useRef(false);
+    const dragStart = useRef({ x: 0, y: 0 });
+    const imageRef = useRef<HTMLImageElement | null>(null);
+
     const nicknameRowRef = useRef<HTMLDivElement | null>(null);
     const searchRowRef = useRef<HTMLDivElement | null>(null);
+
+    const handleDragStart = (e: React.MouseEvent) => {
+        if (imageZoom <= 1) return;
+        isDragging.current = true;
+        setIsDraggingState(true);
+        dragStart.current = { x: e.clientX - pan.current.x, y: e.clientY - pan.current.y };
+    };
+
+    const handleDragMove = (e: React.MouseEvent) => {
+        if (!isDragging.current || imageZoom <= 1 || !imageRef.current) return;
+
+        const container = imageRef.current.parentElement;
+        if (!container) return;
+
+        const imgIntrinsicW = imageRef.current.naturalWidth || 1;
+        const imgIntrinsicH = imageRef.current.naturalHeight || 1;
+        const imgBoxW = imageRef.current.clientWidth;
+        const imgBoxH = imageRef.current.clientHeight;
+
+        const boxRatio = imgBoxW / imgBoxH;
+        const imgRatio = imgIntrinsicW / imgIntrinsicH;
+
+        let actualRenderedW = imgBoxW;
+        let actualRenderedH = imgBoxH;
+
+        if (imgRatio > boxRatio) {
+            actualRenderedH = imgBoxW / imgRatio;
+        } else {
+            actualRenderedW = imgBoxH * imgRatio;
+        }
+
+        const renderedScaledW = actualRenderedW * imageZoom;
+        const renderedScaledH = actualRenderedH * imageZoom;
+
+        const contW = container.clientWidth;
+        const contH = container.clientHeight;
+
+        const basePanX = Math.max(0, (renderedScaledW - contW) / 2);
+        const basePanY = Math.max(0, (renderedScaledH - contH) / 2);
+
+        const EDGE_BUFFER = 80;
+        const maxPanX = basePanX > 0 ? basePanX + EDGE_BUFFER : 0;
+        const maxPanY = basePanY > 0 ? basePanY + EDGE_BUFFER : 0;
+
+        const newX = e.clientX - dragStart.current.x;
+        const newY = e.clientY - dragStart.current.y;
+
+        const boundedX = Math.max(-maxPanX, Math.min(newX, maxPanX));
+        const boundedY = Math.max(-maxPanY, Math.min(newY, maxPanY));
+
+        pan.current = { x: boundedX, y: boundedY };
+        imageRef.current.style.transform = `translate(${boundedX}px, ${boundedY}px) scale(${imageZoom})`;
+    };
+
+    const handleDragEnd = () => {
+        if (!isDragging.current) return;
+        isDragging.current = false;
+        setIsDraggingState(false);
+    };
+
+    // Clamp pan when zoom changes (like zooming out)
+    useEffect(() => {
+        if (!imageRef.current) return;
+        if (imageZoom <= 1) {
+            pan.current = { x: 0, y: 0 };
+            imageRef.current.style.transform = `scale(${imageZoom})`;
+            return;
+        }
+
+        const container = imageRef.current.parentElement;
+        if (!container) return;
+
+        const imgIntrinsicW = imageRef.current.naturalWidth || 1;
+        const imgIntrinsicH = imageRef.current.naturalHeight || 1;
+        const imgBoxW = imageRef.current.clientWidth;
+        const imgBoxH = imageRef.current.clientHeight;
+
+        const boxRatio = imgBoxW / imgBoxH;
+        const imgRatio = imgIntrinsicW / imgIntrinsicH;
+
+        let actualRenderedW = imgBoxW;
+        let actualRenderedH = imgBoxH;
+
+        if (imgRatio > boxRatio) {
+            actualRenderedH = imgBoxW / imgRatio;
+        } else {
+            actualRenderedW = imgBoxH * imgRatio;
+        }
+
+        const renderedScaledW = actualRenderedW * imageZoom;
+        const renderedScaledH = actualRenderedH * imageZoom;
+
+        const contW = container.clientWidth;
+        const contH = container.clientHeight;
+
+        const basePanX = Math.max(0, (renderedScaledW - contW) / 2);
+        const basePanY = Math.max(0, (renderedScaledH - contH) / 2);
+
+        const EDGE_BUFFER = 80;
+        const maxPanX = basePanX > 0 ? basePanX + EDGE_BUFFER : 0;
+        const maxPanY = basePanY > 0 ? basePanY + EDGE_BUFFER : 0;
+
+        pan.current = {
+            x: Math.max(-maxPanX, Math.min(pan.current.x, maxPanX)),
+            y: Math.max(-maxPanY, Math.min(pan.current.y, maxPanY))
+        };
+
+        imageRef.current.style.transform = `translate(${pan.current.x}px, ${pan.current.y}px) scale(${imageZoom})`;
+    }, [imageZoom, selectedImageIndex]);
 
     useEffect(() => {
         if (!isEditingNickname && !isSearchingInChat) {
@@ -120,10 +245,8 @@ export default function ChatPage() {
             if (
                 isEditingNickname &&
                 nicknameRowRef.current &&
-                !nicknameRowRef.current.contains(target) &&
-                nicknameDraft.trim() === nickname
+                !nicknameRowRef.current.contains(target)
             ) {
-                setNicknameDraft(nickname);
                 setIsEditingNickname(false);
             }
 
@@ -170,9 +293,12 @@ export default function ChatPage() {
     }
 
     function handleSaveNickname() {
-        const nextNickname = nicknameDraft.trim() || "Biệt danh";
-        setNickname(nextNickname);
-        setNicknameDraft(nextNickname);
+        const nextNickname = nicknameDraft.trim();
+        if (nextNickname === activeContactName || nextNickname === "") {
+            setNickname("");
+        } else {
+            setNickname(nextNickname);
+        }
         setIsEditingNickname(false);
     }
 
@@ -184,26 +310,28 @@ export default function ChatPage() {
     }
 
     const navLabelClassName = cn(
-        "origin-left overflow-hidden whitespace-nowrap will-change-transform transition-[max-width,opacity,transform] duration-[480ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "origin-left overflow-hidden whitespace-nowrap will-change-transform transition-[max-width,opacity,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
         isNavCollapsed
             ? "pointer-events-none max-w-0 -translate-x-4 opacity-0 delay-0"
-            : "max-w-[240px] translate-x-0 opacity-100 delay-140",
+            : "max-w-[240px] translate-x-0 opacity-100 delay-100",
     );
     const navBodyClassName = cn(
-        "min-w-0 basis-0 overflow-hidden will-change-transform transition-[max-width,opacity,transform] duration-[520ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "min-w-0 basis-0 overflow-hidden will-change-transform transition-[max-width,opacity,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
         isNavCollapsed
             ? "pointer-events-none max-w-0 translate-x-3 opacity-0 delay-0"
-            : "flex-1 max-w-full translate-x-0 opacity-100 delay-180",
+            : "flex-1 max-w-full translate-x-0 opacity-100 delay-150",
     );
+
+    const displayContactName = nickname || activeContactName;
 
     return (
         <MarketingShell
             currentPage="chat"
         >
-            <div className="flex h-full min-h-0 gap-3 overflow-hidden">
+            <div className="flex h-full min-h-0 overflow-hidden">
                 <SectionCard
                     className={cn(
-                        "flex h-full min-h-0 shrink-0 flex-col overflow-hidden !p-0 will-change-[width] transition-[width,transform,box-shadow] duration-[560ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+                        "flex h-full min-h-0 shrink-0 flex-col overflow-hidden !p-0 will-change-[width] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
                         isNavCollapsed ? "w-[62px]" : "w-[24%] min-w-[320px]",
                     )}
                 >
@@ -332,7 +460,7 @@ export default function ChatPage() {
                     </div>
                 </SectionCard>
 
-                <SectionCard className="flex h-full min-h-0 flex-1 flex-col overflow-hidden !p-0">
+                <SectionCard className="ml-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden !p-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
                     <div className="flex items-center justify-between border-b border-white/8 px-3 p-2">
                         <div className="min-w-0">
                             <div className="mt-1 flex items-center gap-3">
@@ -341,7 +469,7 @@ export default function ChatPage() {
                                 </div>
                                 <div className="min-w-0">
                                     <h2 className="truncate text-lg font-semibold text-white">
-                                        Mạnh Frontend
+                                        {displayContactName}
                                     </h2>
                                     <p className="text-sm text-white/45">Hoạt động 3 phút trước</p>
                                 </div>
@@ -404,10 +532,10 @@ export default function ChatPage() {
                 </SectionCard>
                 <SectionCard
                     className={cn(
-                        "flex h-full shrink-0 overflow-hidden !p-0 transition-[width,opacity,padding,border] duration-300 ease-out",
+                        "flex h-full shrink-0 overflow-hidden !p-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
                         isInfoOpen
-                            ? "w-[24%] min-w-[300px] opacity-100"
-                            : "w-0 min-w-0 border-transparent !p-0 opacity-0",
+                            ? "ml-3 w-[24%] min-w-[300px] opacity-100"
+                            : "ml-0 w-0 min-w-0 border-transparent !p-0 opacity-0",
                     )}
                 >
                     <div
@@ -426,12 +554,12 @@ export default function ChatPage() {
                                     containerRef={nicknameRowRef}
                                     icon={<RiPriceTag3Line size={18} />}
                                     title="Biệt danh"
-                                    value={nickname}
+                                    value={displayContactName}
                                     isEditing={isEditingNickname}
                                     draftValue={nicknameDraft}
                                     onDraftChange={setNicknameDraft}
                                     onStartEdit={() => {
-                                        setNicknameDraft(nickname);
+                                        setNicknameDraft(displayContactName);
                                         setIsEditingNickname(true);
                                     }}
                                     onSave={handleSaveNickname}
@@ -453,11 +581,19 @@ export default function ChatPage() {
                                 <MediaBlock
                                     title="File và file phương tiện"
                                     actionLabel="Xem tất cả"
-                                    items={recentImages.map((image) => (
-                                        <div
+                                    items={recentImages.map((image, idx) => (
+                                        <button
+                                            type="button"
                                             key={image.id}
-                                            className="aspect-square rounded-lg border border-white/8 bg-white/[0.05] cursor-pointer hover:border-white/20 transition"
-                                        />
+                                            onClick={() => {
+                                                setSelectedImageIndex(idx);
+                                                setImageZoom(1);
+                                                pan.current = { x: 0, y: 0 };
+                                            }}
+                                            className="aspect-square rounded-lg border border-white/8 bg-white/[0.05] overflow-hidden cursor-pointer hover:border-white/20 transition group"
+                                        >
+                                            <img src={image.url} alt={image.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                        </button>
                                     ))}
                                 />
 
@@ -492,7 +628,7 @@ export default function ChatPage() {
                                         },
                                         {
                                             icon: <RiTeamLine size={18} />,
-                                            label: "Tạo nhóm chat với...",
+                                            label: `Tạo nhóm chat với ${displayContactName}`,
                                             tone: "default",
                                         },
                                         {
@@ -525,6 +661,101 @@ export default function ChatPage() {
                     </div>
                 </SectionCard>
             </div>
+
+            {selectedImageIndex !== null && (
+                <div className="fixed inset-0 z-[100] flex bg-black/70 backdrop-blur-md">
+                    {/* Left Actions Toolbar */}
+                    <div className="flex w-16 shrink-0 flex-col items-center gap-6 border-r border-white/10 bg-black/40 py-6">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedImageIndex(null)}
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 hover:scale-105"
+                            title="Đóng"
+                        >
+                            <RiCloseLine size={24} />
+                        </button>
+                        <div className="h-px w-6 bg-white/10" />
+                        <div className="flex flex-col gap-4">
+                            <button className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white" title="Tải xuống">
+                                <RiDownload2Line size={22} />
+                            </button>
+                            <button className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white" title="Chia sẻ">
+                                <RiShareForwardLine size={22} />
+                            </button>
+                            <button className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white" title="Chuyển tiếp">
+                                <RiArrowGoForwardLine size={22} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main Image View */}
+                    <div
+                        className={cn(
+                            "relative flex flex-1 flex-col items-center justify-center overflow-hidden p-6",
+                            imageZoom > 1 ? (isDraggingState ? "cursor-grabbing" : "cursor-grab") : "cursor-default"
+                        )}
+                        onMouseDown={handleDragStart}
+                        onMouseMove={handleDragMove}
+                        onMouseUp={handleDragEnd}
+                        onMouseLeave={handleDragEnd}
+                    >
+                        <div className="absolute top-6 right-6 z-10 flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setImageZoom(z => {
+                                        const newZ = Math.max(0.5, z - 0.25);
+                                        if (newZ <= 1) pan.current = { x: 0, y: 0 };
+                                        return newZ;
+                                    });
+                                }}
+                                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white/80 transition hover:bg-black/60 hover:text-white"
+                            >
+                                <RiZoomOutLine size={20} />
+                            </button>
+                            <button
+                                onClick={() => setImageZoom(z => Math.min(4, z + 0.25))}
+                                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white/80 transition hover:bg-black/60 hover:text-white"
+                            >
+                                <RiZoomInLine size={20} />
+                            </button>
+                        </div>
+                        <img
+                            ref={imageRef}
+                            src={recentImages[selectedImageIndex].url}
+                            alt="Selected"
+                            draggable={false}
+                            style={{
+                                transform: `translate(${pan.current.x}px, ${pan.current.y}px) scale(${imageZoom})`,
+                                transition: isDraggingState ? 'none' : 'transform 0.3s ease-out'
+                            }}
+                            className="max-h-full max-w-full select-none object-contain"
+                        />
+                    </div>
+
+                    {/* Right Thumbnails Sidebar */}
+                    <div className="flex w-[140px] shrink-0 flex-col items-center gap-3 overflow-y-auto border-l border-white/10 bg-black/40 py-6">
+                        {recentImages.map((img, idx) => (
+                            <button
+                                key={img.id}
+                                type="button"
+                                onClick={() => {
+                                    setSelectedImageIndex(idx);
+                                    setImageZoom(1);
+                                    pan.current = { x: 0, y: 0 };
+                                }}
+                                className={cn(
+                                    "h-24 w-24 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300",
+                                    idx === selectedImageIndex
+                                        ? "border-green-400 opacity-100 scale-100"
+                                        : "border-transparent opacity-40 hover:opacity-100 hover:scale-95",
+                                )}
+                            >
+                                <img src={img.url} alt={img.label} className="h-full w-full object-cover" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </MarketingShell>
     );
 }
