@@ -30,7 +30,14 @@ import { SectionCard } from "@/components/ui/section-card";
 import { cn } from "@/utils/cn";
 import InputSend from "@/components/ui/input-send";
 
-const conversations = [
+const conversations: Array<{
+    id: string;
+    name: string;
+    message: string;
+    time: string;
+    unread: number;
+    active?: boolean;
+}> = [
     {
         id: "1",
         name: "Mạnh Frontend",
@@ -113,6 +120,7 @@ export default function ChatPage() {
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [isSearchingInChat, setIsSearchingInChat] = useState(false);
     const [chatSearchValue, setChatSearchValue] = useState("");
+    const [mobileView, setMobileView] = useState<"list" | "chat" | "info">("list");
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
     const [imageZoom, setImageZoom] = useState(1);
 
@@ -331,8 +339,10 @@ export default function ChatPage() {
             <div className="flex h-full min-h-0 overflow-hidden">
                 <SectionCard
                     className={cn(
-                        "flex h-full min-h-0 shrink-0 flex-col overflow-hidden !p-0 will-change-[width] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
-                        isNavCollapsed ? "w-[62px]" : "w-[24%] min-w-[320px]",
+                        "flex h-full min-h-0 shrink-0 flex-col overflow-hidden !p-0 will-change-[width,transform] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                        isNavCollapsed ? "md:w-[62px]" : "md:w-[24%] md:min-w-[320px]",
+                        "max-md:absolute max-md:inset-0 max-md:w-full max-md:z-10 max-md:bg-[#0B0B0F] max-md:border-none",
+                        mobileView === "list" ? "max-md:translate-x-0 max-md:opacity-100" : "max-md:-translate-x-1/4 max-md:opacity-0 max-md:pointer-events-none"
                     )}
                 >
                     <div className={`flex items-center border-b border-white/8 px-3 py-2 ${isNavCollapsed ? "justify-center" : "justify-between"}`}>
@@ -371,6 +381,7 @@ export default function ChatPage() {
                                 <button
                                     key={conversation.id}
                                     type="button"
+                                    onClick={() => setMobileView("chat")}
                                     className={cn(
                                         "flex items-center gap-3 rounded-[10px] border border-transparent text-left transition",
                                         conversation.active
@@ -460,29 +471,47 @@ export default function ChatPage() {
                     </div>
                 </SectionCard>
 
-                <SectionCard className="ml-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden !p-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                <SectionCard
+                    className={cn(
+                        "flex h-full min-h-0 flex-1 flex-col overflow-hidden !p-0 transition-[transform,margin,opacity] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                        "md:ml-3",
+                        "max-md:absolute max-md:inset-0 max-md:z-20 max-md:w-full max-md:bg-[#0B0B0F] max-md:border-none",
+                        mobileView === "chat" || mobileView === "info" ? "max-md:translate-x-0" : "max-md:translate-x-full max-md:opacity-0 max-md:pointer-events-none"
+                    )}
+                >
                     <div className="flex items-center justify-between border-b border-white/8 px-3 p-2">
                         <div className="min-w-0">
-                            <div className="mt-1 flex items-center gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#2fb36d] text-sm font-bold text-black">
+                            <div className="mt-1 flex items-center gap-2">
+                                <button
+                                    onClick={() => setMobileView("list")}
+                                    className="md:hidden flex h-10 w-9 -ml-2 items-center justify-center text-white/80 active:opacity-50"
+                                >
+                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                                </button>
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2fb36d] text-sm font-bold text-black">
                                     MM
                                 </div>
-                                <div className="min-w-0">
-                                    <h2 className="truncate text-lg font-semibold text-white">
+                                <button onClick={() => setMobileView("info")} className="min-w-0 md:cursor-default cursor-pointer text-left focus:outline-none">
+                                    <h2 className="truncate text-[17px] font-semibold text-white">
                                         {displayContactName}
                                     </h2>
-                                    <p className="text-sm text-white/45">Hoạt động 3 phút trước</p>
-                                </div>
+                                    <p className="text-[13px] text-white/50">Hoạt động 3 phút trước</p>
+                                </button>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white">
+                            <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white">
                                 <RiUser3Line size={18} />
                             </button>
                             <button
-                                onClick={() => setIsInfoOpen(!isInfoOpen)} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white">
-                                <RiMore2Fill size={24} />
+                                onClick={() => {
+                                    setIsInfoOpen(!isInfoOpen);
+                                    setMobileView("info");
+                                }}
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white"
+                            >
+                                <RiMore2Fill size={22} />
                             </button>
                         </div>
                     </div>
@@ -532,20 +561,28 @@ export default function ChatPage() {
                 </SectionCard>
                 <SectionCard
                     className={cn(
-                        "flex h-full shrink-0 overflow-hidden !p-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                        "flex h-full shrink-0 overflow-hidden !p-0 transition-[transform,margin,opacity,width] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
                         isInfoOpen
-                            ? "ml-3 w-[24%] min-w-[300px] opacity-100"
-                            : "ml-0 w-0 min-w-0 border-transparent !p-0 opacity-0",
+                            ? "md:ml-3 md:w-[24%] md:min-w-[300px] md:opacity-100"
+                            : "md:ml-0 md:w-0 md:min-w-0 border-transparent !p-0 md:opacity-0 md:pointer-events-none",
+                        "max-md:absolute max-md:inset-0 max-md:z-30 max-md:w-full max-md:bg-[#0B0B0F] max-md:border-none",
+                        mobileView === "info" ? "max-md:translate-x-0" : "max-md:translate-x-full max-md:opacity-0 max-md:pointer-events-none"
                     )}
                 >
                     <div
                         className={cn(
                             "flex h-full w-full flex-col overflow-hidden transition-opacity duration-200",
-                            isInfoOpen ? "opacity-100 delay-100" : "pointer-events-none opacity-0",
+                            isInfoOpen || mobileView === "info" ? "opacity-100 delay-100" : "pointer-events-none opacity-0",
                         )}
                     >
-                        <div className="border-b border-white/8 px-4 py-3">
-                            <h3 className="text-base text-center font-semibold text-white">Thông tin đoạn chat</h3>
+                        <div className="flex items-center gap-2 border-b border-white/8 px-2 py-3">
+                            <button
+                                onClick={() => setMobileView("chat")}
+                                className="md:hidden flex h-10 w-10 items-center justify-center text-white/80 active:opacity-50"
+                            >
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                            </button>
+                            <h3 className="text-base flex-1 md:text-center md:pr-0 pr-10 font-semibold text-white">Thông tin đoạn chat</h3>
                         </div>
 
                         <div className="min-h-0 flex-1 overflow-y-auto py-2">
