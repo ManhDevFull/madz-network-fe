@@ -18,10 +18,20 @@ import {
     RiImageLine,
 } from "react-icons/ri";
 import type { ProfileUser } from "@/app/profile/profile-view";
-import type { UserPost } from "../layout/marketing-shell";
 
 // ─── Types ───────────────────────────────────────────────────────────
 type Tab = "posts" | "about" | "photos";
+
+type UserPost = {
+    id: string;
+    user_id: string;
+    content: string | null;
+    media_url: string | null;
+    like_count: number;
+    comment_count: number;
+    created_at: string;
+    updated_at: string;
+};
 
 type MobileProfileViewProps = {
     userProfile: ProfileUser | null;
