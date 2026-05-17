@@ -4,13 +4,13 @@ import { PwaInstallButton } from "@/components/ui/pwa-install-button";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Thread Clone",
-  description: "Dark social app UI for home, login, and register flows.",
+  title: "MADZ Network",
+  description: "MADZ Network social platform for home, login, chat, profile, and settings.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Thread Clone",
+    title: "MADZ Network",
   },
   icons: {
     icon: "/logo.png",

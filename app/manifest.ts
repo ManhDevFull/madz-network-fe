@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Thread Clone",
-    short_name: "Thread",
-    description: "Dark social app UI for home, login, chat, profile, and settings.",
+    name: "MADZ Network",
+    short_name: "MADZ",
+    description: "MADZ Network social platform for home, login, chat, profile, and settings.",
     start_url: "/",
     display: "standalone",
     background_color: "#0f1016",

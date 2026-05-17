@@ -227,10 +227,10 @@ export function MarketingShell({
       <BrandMark />
       <div>
         <p className="text-[0.7rem] uppercase tracking-[0.32em] text-muted">
-          Madz Network
+          MADZ Network
         </p>
         <p className="text-sm font-semibold text-foreground">
-          Thread Clone
+          MADZ Network
         </p>
       </div>
     </Link>
@@ -709,7 +709,7 @@ export function MarketingShell({
             <div className="flex min-w-0 items-center gap-3">
               <BrandMark />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-black/90">Thread Clone</p>
+                <p className="truncate text-sm font-semibold text-black/90">MADZ Network</p>
                 <p className="truncate text-xs text-black/45">
                   Không gian xã hội gọn cho mobile
                 </p>

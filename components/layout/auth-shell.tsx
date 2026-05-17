@@ -30,7 +30,7 @@ export function AuthShell({
                       MADZ
                     </p>
                     <p className="text-sm font-semibold text-foreground">
-                      Thread Clone
+                      MADZ Network
                     </p>
                   </div>
                 </Link>

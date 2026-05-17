@@ -253,7 +253,7 @@ export function PwaInstallButton() {
                         </div>
 
                         <div className="px-5 pb-2">
-                            <h2 className="text-xl font-bold text-white">Cài đặt Thread Clone</h2>
+                            <h2 className="text-xl font-bold text-white">Cài đặt MADZ Network</h2>
                             <p className="mt-2 text-sm text-white/55 leading-relaxed">
                                 {canInstallDirectly
                                     ? "Cài về màn hình chính để trải nghiệm như app thật — mở nhanh, dùng offline và không có thanh địa chỉ."
